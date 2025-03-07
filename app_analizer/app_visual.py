@@ -634,4 +634,4 @@ def draw_patterns_on_chart(fig, df, patterns):
         'double_top': 'rgba(255, 0, 0, 0.7)',  # Stronger red
         'double_bottom': 'rgba(0, 128, 0, 0.7)',  # Stronger green
         'head_shoulders': 'rgba(139, 0, 0, 0.7)',  # Dark red
-        'inverse_head_shoulders': 'rgba(0, 100,
+        'inverse_head_shoulders': 'rgba(0,
