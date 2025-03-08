@@ -3,7 +3,7 @@ from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 import numpy as np
 
-# Generate fake training data
+# Generate dummy training data
 X_train = np.random.rand(1000, 5)  # 1000 samples, 5 features (OHLCV)
 y_train = np.random.randint(0, 2, (1000, 3))  # 3 output classes (wedges, double tops, breakouts)
 
@@ -11,7 +11,7 @@ y_train = np.random.randint(0, 2, (1000, 3))  # 3 output classes (wedges, double
 model = Sequential([
     Dense(64, activation='relu', input_shape=(5,)),
     Dense(64, activation='relu'),
-    Dense(3, activation='softmax')  # 3 classes
+    Dense(3, activation='softmax')  # Example: 3 classes
 ])
 
 model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
