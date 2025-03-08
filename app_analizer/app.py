@@ -1,7 +1,14 @@
 import requests
 import os
 from tensorflow.keras.models import load_model
+import streamlit as st
+import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
+import yfinance as yf
+from sklearn.preprocessing import MinMaxScaler
 
+# ✅ Improved version: Load ML model (downloads if missing)
 def load_ml_model():
     model_path = "pattern_model.h5"
     github_url = "https://raw.githubusercontent.com/Papersp/chart_screen/main/app_analizer/pattern_model.h5"
@@ -20,28 +27,6 @@ def load_ml_model():
     # Load the model
     try:
         model = load_model(model_path)
-        return model
-    except Exception as e:
-        st.error(f"Error loading ML model: {e}")
-        return None
-
-
-
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import yfinance as yf
-import requests
-import json
-from sklearn.preprocessing import MinMaxScaler
-from tensorflow.keras.models import load_model
-
-# Load pre-trained ML model for pattern recognition (Placeholder)
-def load_ml_model():
-    # Assume a trained model exists as 'pattern_model.h5'
-    try:
-        model = load_model("pattern_model.h5")
         return model
     except Exception as e:
         st.error(f"Error loading ML model: {e}")
