@@ -1,3 +1,32 @@
+import requests
+import os
+from tensorflow.keras.models import load_model
+
+def load_ml_model():
+    model_path = "pattern_model.h5"
+    github_url = "https://raw.githubusercontent.com/Papersp/chart_screen/main/app_analizer/pattern_model.h5"
+
+    # Check if the model file exists locally
+    if not os.path.exists(model_path):
+        # Download the model file from GitHub
+        response = requests.get(github_url)
+        if response.status_code == 200:
+            with open(model_path, "wb") as f:
+                f.write(response.content)
+        else:
+            st.error("Failed to download ML model. Make sure the file exists on GitHub.")
+            return None
+
+    # Load the model
+    try:
+        model = load_model(model_path)
+        return model
+    except Exception as e:
+        st.error(f"Error loading ML model: {e}")
+        return None
+
+
+
 import streamlit as st
 import pandas as pd
 import numpy as np
