@@ -1,14 +1,7 @@
 import requests
 import os
 from tensorflow.keras.models import load_model
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.graph_objects as go
-import yfinance as yf
-from sklearn.preprocessing import MinMaxScaler
 
-# ✅ Improved version: Load ML model (downloads if missing)
 def load_ml_model():
     model_path = "pattern_model.h5"
     github_url = "https://raw.githubusercontent.com/Papersp/chart_screen/main/app_analizer/pattern_model.h5"
@@ -32,11 +25,6 @@ def load_ml_model():
         st.error(f"Error loading ML model: {e}")
         return None
 
-# Fetch market data from yfinance
-def fetch_yfinance_data(symbol, period='1mo', interval='1d'):
-    df = yf.download(symbol, period=period, interval=interval)
-    df.reset_index(inplace=True)
-    return df
 
 # Fetch market data from Binance API
 def fetch_binance_data(symbol, interval='1h', limit=100):
