@@ -2,55 +2,79 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
-import talib
+import yfinance as yf
 import requests
+import json
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import load_model
 
-# Function to fetch live market data (example using Yahoo Finance API)
-def fetch_market_data(symbol, interval='1d', limit=100):
-    url = f'https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval={interval}&range=1mo'
-    response = requests.get(url).json()
+# Load pre-trained ML model for pattern recognition (Placeholder)
+def load_ml_model():
+    # Assume a trained model exists as 'pattern_model.h5'
     try:
-        timestamps = response['chart']['result'][0]['timestamp']
-        ohlc = response['chart']['result'][0]['indicators']['quote'][0]
-        df = pd.DataFrame(ohlc, index=pd.to_datetime(timestamps, unit='s'))
-        df.rename(columns={'open': 'Open', 'high': 'High', 'low': 'Low', 'close': 'Close', 'volume': 'Volume'}, inplace=True)
-        return df.dropna()
+        model = load_model("pattern_model.h5")
+        return model
     except Exception as e:
-        st.error(f"Error fetching data: {e}")
+        st.error(f"Error loading ML model: {e}")
         return None
 
-# Function to detect double tops and bottoms
-def detect_double_top_bottom(df):
-    peaks = talib.MAX(df['High'], timeperiod=10)
-    troughs = talib.MIN(df['Low'], timeperiod=10)
-    return peaks, troughs
+# Fetch market data from yfinance
+def fetch_yfinance_data(symbol, period='1mo', interval='1d'):
+    df = yf.download(symbol, period=period, interval=interval)
+    df.reset_index(inplace=True)
+    return df
 
-# Function to detect head and shoulders
-def detect_head_and_shoulders(df):
-    df['SMA50'] = talib.SMA(df['Close'], timeperiod=50)
-    df['SMA200'] = talib.SMA(df['Close'], timeperiod=200)
-    df['H&S'] = (df['SMA50'] > df['SMA200']) & (df['Close'].shift(1) > df['Close']) & (df['Close'].shift(-1) > df['Close'])
-    return df['H&S']
+# Fetch market data from Binance API
+def fetch_binance_data(symbol, interval='1h', limit=100):
+    url = f'https://api.binance.com/api/v3/klines?symbol={symbol}&interval={interval}&limit={limit}'
+    response = requests.get(url).json()
+    df = pd.DataFrame(response, columns=['timestamp', 'Open', 'High', 'Low', 'Close', 'Volume', '_', '_', '_', '_', '_', '_'])
+    df = df[['timestamp', 'Open', 'High', 'Low', 'Close', 'Volume']]
+    df['timestamp'] = pd.to_datetime(df['timestamp'], unit='ms')
+    return df
 
-# Function to plot candlestick chart
+# Placeholder for Alpha Vantage / OANDA integration
+def fetch_forex_data(symbol):
+    return pd.DataFrame()
+
+# Detect patterns using ML model
+def detect_patterns(df, model):
+    scaler = MinMaxScaler()
+    data_scaled = scaler.fit_transform(df[['Open', 'High', 'Low', 'Close', 'Volume']].values)
+    predictions = model.predict(np.expand_dims(data_scaled, axis=0))
+    return predictions
+
+# Plot candlestick chart
 def plot_candlestick(df, title="Candlestick Chart"):
     fig = go.Figure()
-    fig.add_trace(go.Candlestick(x=df.index, open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'], name='Candlesticks'))
-    peaks, troughs = detect_double_top_bottom(df)
-    fig.add_trace(go.Scatter(x=df.index, y=peaks, mode='markers', marker=dict(color='red', size=8), name='Double Tops'))
-    fig.add_trace(go.Scatter(x=df.index, y=troughs, mode='markers', marker=dict(color='green', size=8), name='Double Bottoms'))
+    fig.add_trace(go.Candlestick(
+        x=df['timestamp'] if 'timestamp' in df else df['Date'],
+        open=df['Open'], high=df['High'], low=df['Low'], close=df['Close'],
+        name='Candlesticks'
+    ))
     st.plotly_chart(fig)
 
 # Streamlit UI
 def main():
-    st.title("Real-Time Market Pattern Recognition")
-    symbol = st.text_input("Enter Stock Symbol (e.g., AAPL, TSLA, BTC-USD)", "AAPL")
+    st.title("Financial Market Visualizer")
+    symbol = st.text_input("Enter Symbol (e.g., AAPL, BTCUSDT, EURUSD)", "AAPL")
+    data_source = st.selectbox("Select Data Source", ["Yahoo Finance", "Binance", "Forex (Alpha Vantage/OANDA)"])
+    interval = st.selectbox("Select Timeframe", ["1d", "1h", "5m"])
+    model = load_ml_model()
+    
     if st.button("Analyze Chart"):
-        df = fetch_market_data(symbol)
-        if df is not None:
+        if data_source == "Yahoo Finance":
+            df = fetch_yfinance_data(symbol)
+        elif data_source == "Binance":
+            df = fetch_binance_data(symbol, interval)
+        else:
+            df = fetch_forex_data(symbol)
+        
+        if not df.empty:
             plot_candlestick(df, title=f"{symbol} Candlestick Chart")
-            if detect_head_and_shoulders(df).any():
-                st.warning("Head & Shoulders pattern detected!")
+            if model:
+                patterns = detect_patterns(df, model)
+                st.write("Pattern Predictions:", patterns)
 
 if __name__ == "__main__":
     main()
